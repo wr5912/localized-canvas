@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  agents:
+    build:
+      context: .
+      target: agents
+      dockerfile: Dockerfile
+    container_name: open-canvas-agents
+    ports:
+      - "54367:54367"
+    env_file:
+      - .env
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - ./apps/agents/src:/app/apps/agents/src
+      - ./.env:/app/.env
+    restart: unless-stopped
+    networks:
+      - open-canvas-network
+
+  web:
+    build:
+      context: .
+      target: web
+      dockerfile: Dockerfile
+    container_name: open-canvas-web
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./apps/web/.env
+    environment:
+      - NODE_ENV=production
+      - LANGGRAPH_API_URL=http://agents:54367
+    depends_on:
+      - agents
+    volumes:
+      - ./apps/web/src:/app/apps/web/src
+    restart: unless-stopped
+    networks:
+      - open-canvas-network
+
+networks:
+  open-canvas-network:
+    driver: bridge
